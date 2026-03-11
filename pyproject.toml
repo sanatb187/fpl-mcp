@@ -1,0 +1,17 @@
+[project]
+name = "fpl-mcp"
+version = "0.1.0"
+description = "A Python-based MCP server for Fantasy Premier League, built to learn tool calling, structured outputs, and real-world LLM integrations."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "httpx",
+  "mcp",
+]
+
+[dependency-groups]
+dev = [
+  "ruff",
+  "mypy",
+  "pytest",
+]
