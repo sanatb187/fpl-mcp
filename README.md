@@ -35,14 +35,7 @@ fpl-mcp/
         ├── fpl_api.py
         └── server.py
 
-
-Use this to save the append block into a text file first:
-
-````bash
-cat > append-goose-readme.txt <<'EOF'
-## Using with Goose
-
-This project can be used from Goose with either Ollama or OpenAI as the model provider.
+```
 
 ### Prerequisites
 
