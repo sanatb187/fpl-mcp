@@ -3,6 +3,7 @@ from __future__ import annotations
 from mcp.server.fastmcp import FastMCP
 
 from fpl_mcp.fpl_api import find_player, get_players
+from fpl_mcp.official_fpl_fixtures import get_head_to_head, get_team_recent_form
 
 mcp = FastMCP("fpl-mcp")
 
@@ -32,20 +33,9 @@ async def get_players_tool(
     - selected_by_percent
     - minutes
 
-    Optional filters (Use only if query demands it):
-    - max_selected_percent: Can be used to handle user queries like "differential" (< = 10 percent), or most common (>80 percent)
-      Example: 10.0 means only players selected by 10 percent or fewer managers
-    - max_cost: maximum player price in FPL
-
-    Examples:
-    - Top 5 midfielders by form:
-      position='MID', limit=5, sort_by='form'
-
-    - Differential midfielders by cost:
-      position='midfielder', sort_by='cost', max_selected_percent=10.0
-
-    - Cheap forwards:
-      position='forward', max_cost=6.5, sort_by='form'
+    Optional filters:
+    - max_selected_percent: use this to find differentials
+    - max_cost: maximum FPL price
     """
     try:
         players = await get_players(
@@ -65,10 +55,7 @@ async def get_players_tool(
             "players": players,
         }
     except Exception as exc:
-        return {
-            "ok": False,
-            "error": str(exc),
-        }
+        return {"ok": False, "error": str(exc)}
 
 
 @mcp.tool()
@@ -85,10 +72,55 @@ async def find_player_tool(name: str) -> dict:
             "players": players,
         }
     except Exception as exc:
-        return {
-            "ok": False,
-            "error": str(exc),
-        }
+        return {"ok": False, "error": str(exc)}
+
+
+@mcp.tool()
+async def get_team_recent_form_tool(
+    team_name: str,
+    last_n: int = 5,
+) -> dict:
+    """
+    Return a Premier League team's recent form using official FPL fixture results.
+
+    This tool uses finished fixtures from the official FPL dataset for the
+    current season and is intended for recent form analysis, such as the last
+    5 finished league matches.
+    """
+    try:
+        result = await get_team_recent_form(
+            team_name=team_name,
+            last_n=last_n,
+        )
+        return {"ok": True, **result}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+@mcp.tool()
+async def get_recent_head_to_head_tool(
+    team_a: str,
+    team_b: str,
+    last_n: int = 5,
+) -> dict:
+    """
+    Return recent finished Premier League meetings between two teams using
+    official FPL fixture results.
+
+    This tool uses only fixtures available in the official FPL dataset and is
+    best for recent same-season comparisons. It returns up to the requested
+    number of finished meetings, but it does not guarantee full multi-season
+    historical head-to-head coverage.
+    """
+    try:
+        result = await get_head_to_head(
+            team_a=team_a,
+            team_b=team_b,
+            last_n=last_n,
+        )
+        return {"ok": True, **result}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
 
 
 if __name__ == "__main__":
