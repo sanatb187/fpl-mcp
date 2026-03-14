@@ -3,7 +3,7 @@ from __future__ import annotations
 from mcp.server.fastmcp import FastMCP
 
 from fpl_mcp.fpl_api import find_player, get_players
-from fpl_mcp.official_fpl_fixtures import get_head_to_head, get_team_recent_form
+from fpl_mcp.official_fpl_fixtures import get_head_to_head, get_team_recent_form, get_team_next_fixtures
 
 mcp = FastMCP("fpl-mcp")
 
@@ -74,6 +74,27 @@ async def find_player_tool(name: str) -> dict:
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
 
+
+@mcp.tool()
+async def get_team_next_fixtures_tool(
+    team_name: str,
+    next_n: int = 5,
+) -> dict:
+    """
+    Return a Premier League team's next N scheduled fixtures using official FPL data.
+
+    This tool uses upcoming fixtures from the official FPL dataset for the
+    current season. It is intended for short-term fixture planning and
+    summarizes average fixture difficulty across the returned matches.
+    """
+    try:
+        result = await get_team_next_fixtures(
+            team_name=team_name,
+            next_n=next_n,
+        )
+        return {"ok": True, **result}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
 
 @mcp.tool()
 async def get_team_recent_form_tool(

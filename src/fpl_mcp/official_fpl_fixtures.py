@@ -93,7 +93,62 @@ async def get_team_last_fixtures(team_id: int, last_n: int = 5) -> list[dict[str
 
     return played_sorted[:last_n]
 
+async def get_team_next_fixtures(team_name: str, next_n: int = 5) -> dict:
+    fixtures = await fetch_fixtures()
+    bootstrap = await fetch_bootstrap()
 
+    team = await search_team(team_name)
+    team_id = team["team_id"]
+    team_map = {t["id"]: t["name"] for t in bootstrap["teams"]}
+
+    upcoming = [
+        fixture
+        for fixture in fixtures
+        if fixture.get("finished") is False
+        and fixture.get("kickoff_time") is not None
+        and (fixture["team_h"] == team_id or fixture["team_a"] == team_id)
+    ]
+
+    upcoming_sorted = sorted(
+        upcoming,
+        key=lambda fixture: (
+            fixture["kickoff_time"],
+            fixture.get("event") or 0,
+            fixture.get("id") or 0,
+        ),
+    )[:next_n]
+
+    matches = []
+    difficulties = []
+
+    for fixture in upcoming_sorted:
+        is_home = fixture["team_h"] == team_id
+        opponent_id = fixture["team_a"] if is_home else fixture["team_h"]
+        opponent_name = team_map.get(opponent_id, "Unknown")
+        difficulty = fixture["team_h_difficulty"] if is_home else fixture["team_a_difficulty"]
+        difficulties.append(difficulty)
+
+        matches.append(
+            {
+                "fixture_id": fixture["id"],
+                "gameweek": fixture.get("event"),
+                "kickoff_time": fixture.get("kickoff_time"),
+                "home_or_away": "home" if is_home else "away",
+                "opponent": opponent_name,
+                "difficulty": difficulty,
+            }
+        )
+
+    avg_difficulty = round(sum(difficulties) / len(difficulties), 2) if difficulties else None
+
+    return {
+        "team": team["team_name"],
+        "next_n": len(matches),
+        "fixtures": matches,
+        "summary": {
+            "average_difficulty": avg_difficulty,
+        },
+    }
 async def get_team_recent_form(team_name: str, last_n: int = 5) -> dict[str, Any]:
     bootstrap = await fetch_bootstrap()
     team = await search_team(team_name)
